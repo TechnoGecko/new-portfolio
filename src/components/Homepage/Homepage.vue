@@ -5,39 +5,62 @@ import '../../style.css'
 const userHasScrolled = ref(false);
 const namecardHasMoved = ref(false);
 const currentSlideshowStep = ref(0);
+const inputDelayIsActive = ref(false);
+const inputDelayLengthMs = 1500;
+
 
 const slideshowSteps = [
   {
     "title": "Full Stack Developer",
-    "subtitle": "I excel in a wide range of web technologies, from interactive UIs to complex database architecture and",
-    "slideshowImages": [
-      {
-        "url": '',
-        "alt": '',
-        "caption": '',
-      }
-    ]
+    "subtitle": "I excel in a wide range of web technologies, from interactive UIs to complex database architecture and ",
+    "sections": [],
   },
   {
-
-  }
+    "title": "Agency Experience",
+    "subtitle": "With 2 years of agency experience using a wide range of technologies and adressing an even wider variety of client needs, I'm adaptable and intuitive when searching for solutions to tricky problems.",
+    "sections": [
+      {
+        "title": "PHP and SQL",
+        "subtitle": "A full-stack web development match made in heaven, once you get used to the syntax!"
+      },
+      {
+        "title": "Javascript and Friends",
+        "subtitle": "I often prefer vanilla JS when I have the choice, but I'm just as comfortable in a framework like React or Vue.",
+      },
+      {
+        "title": "Shopify and Ruby",
+        "description": "I have experience making customizations to shopify themes, from visual edits to full functionality overhauls. Writing custom apps and scripts."
+      }
+    ],
+    "section_id": ""
+  },
+  {
+    "title": "Personal Projects",
+    "subtitle": "Programming has also found it's way into my creative life. Game and app development turned out to be a convergance of the many seemingly-unrelated hobbies I've picked up throughout my life, and learning to code was just the missing piece.",
+    "sections": [''],
+    "section_id": ""
+  },
 ]
 
 onMounted(() => {
-  const listenForInitialScroll = (e) => {
-    if (e.deltaY > 0) {
+  const listenForInitialScrollorClick = (e) => {
+    if (inputDelayIsActive.value == true) return;
+    if (e.deltaY > 0 || e.type == 'click') {
       userHasScrolled.value = true; // Toggle reactive flag
       namecard.style.minWidth = '425px';
       namecard.style.transition = 'color .15s ease-in';
       namecard.style.color = 'rgba(0,0,0,0)';
+      startInputDelay();
       // namecard.querySelector('#namecard-img').style.display = 'none';
       setTimeout(() => {
         modifyNamecardForHeader();
         namecardHasMoved.value = true;
       }, 300)
 
-      window.removeEventListener('wheel', listenForInitialScroll);
-      window.addEventListener('wheel', listenForSlideshowScroll);
+      window.removeEventListener('wheel', listenForInitialScrollorClick);
+      window.removeEventListener('click', listenForInitialScrollorClick);
+      window.addEventListener('wheel', listenForSlideshowScrollOrClick);
+      window.addEventListener('click', listenForSlideshowScrollOrClick);
     }
   }
 
@@ -51,12 +74,28 @@ onMounted(() => {
   }
 
 
-  const listenForSlideshowScroll = () => {
+  const listenForSlideshowScrollOrClick = () => {
+    if (inputDelayIsActive.value == true) return;
     console.log('hi c:');
+
+
+
+    startInputDelay();
   }
 
-  window.addEventListener('wheel', listenForInitialScroll);
+  window.addEventListener('wheel', listenForInitialScrollorClick);
+  window.addEventListener('click', listenForInitialScrollorClick);
 });
+
+
+const startInputDelay = () => {
+  inputDelayIsActive.value = true;
+  console.log('Input delay started');
+  setTimeout(() => {
+    inputDelayIsActive.value = false;
+    console.log('Input delay ended');
+  }, inputDelayLengthMs);
+}
 </script>
 
 <template>
@@ -75,6 +114,10 @@ onMounted(() => {
           <br />
           Reeves
         </h1>
+        <span id="prompt-text" class="primary-font light italic" :class="{ 'fade-out': userHasScrolled }">Scroll or
+          click
+          to learn
+          more...</span>
 
         <div id="lower-section" :class="{ 'expand': userHasScrolled, 'scroll-into-view': namecardHasMoved }">
           <div id="rotating-title-container">
@@ -121,6 +164,26 @@ onMounted(() => {
   border-bottom: 1px solid #ddd;
 }
 
+:deep(#prompt-text) {
+  transition: color 3s ease-out;
+  position: absolute;
+  color: #c4b9b9;
+  top: 72%;
+  left: 50%;
+  font-size: 18px;
+  animation: infinite 3s pulse alternate;
+}
+
+@keyframes pulse {
+  0% {
+    color: #c4b9b9;
+  }
+
+  50% {
+    color: #847d7d;
+  }
+}
+
 .fade-out {
   color: rgb(0, 0, 0, 0) !important;
 }
@@ -139,6 +202,13 @@ onMounted(() => {
 
 #side-by-side-main {
   display: flex;
+}
+
+@media screen and (max-width: 920px) {
+  #side-by-side-main {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 #side-by-side-main.align-center-initial {
@@ -306,3 +376,4 @@ onMounted(() => {
   border-right: 1px solid #d2d2d2;
 }
 </style>
+onimation: infinite pulse alternate slide-in;
