@@ -13,6 +13,10 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+body {
+  margin: 0;
+}
+
 @font-face {
   font-family: "Roboto Serif";
   src: url("/public/fonts/RobotoSerif-VariableFont_GRAD\,opsz\,wdth\,wght.ttf") format('.ttf'),
@@ -31,6 +35,12 @@
   font-style: normal;
   font-display: swap;
   font-optical-sizing: auto;
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .primary-font {
@@ -58,7 +68,7 @@
   font-family: "Josefin Slab", serif;
   font-optical-sizing: auto;
   font-weight: 400;
-  font-style: normal;
+  font-style: normal
 }
 
 .secondary-font.light {

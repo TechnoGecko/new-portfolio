@@ -1,13 +1,15 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import '../../style.css'
 
 const userHasScrolled = ref(false);
 const namecardHasMoved = ref(false);
-const currentSlideshowStep = ref(0);
+const currentSlideshowStepIndex = ref(0);
+const slideshowCurrentSectionIndex = ref(0);
 const inputDelayIsActive = ref(false);
 const inputDelayLengthMs = 1500;
-
+const scrollLeftSectionIntoView = ref(false);
+const scrollRightSectionIntoView = ref(false);
 
 const slideshowSteps = [
   {
@@ -21,29 +23,42 @@ const slideshowSteps = [
     "sections": [
       {
         "title": "PHP and SQL",
-        "subtitle": "A full-stack web development match made in heaven, once you get used to the syntax!"
+        "subtitle": "A full-stack web development match made in heaven, once you get used to the syntax!",
+        "icons": ["../../public/media/php-logo.png", "../../public/media/mysql-logo.png"]
       },
       {
         "title": "Javascript and Friends",
         "subtitle": "I often prefer vanilla JS when I have the choice, but I'm just as comfortable in a framework like React or Vue.",
+        "icons": ["./public/media/js-logo.png", "./public/media/react-logo.png", "./public/media/vue-logo.png",]
       },
       {
-        "title": "Shopify and Ruby",
-        "description": "I have experience making customizations to shopify themes, from visual edits to full functionality overhauls. Writing custom apps and scripts."
+        "title": "Shopify",
+        "description": "I have experience making a variety of customizations to shopify themes, from small visual edits to full functionality overhauls using custom apps and scripts."
       }
     ],
-    "section_id": ""
   },
   {
     "title": "Personal Projects",
     "subtitle": "Programming has also found it's way into my creative life. Game and app development turned out to be a convergance of the many seemingly-unrelated hobbies I've picked up throughout my life, and learning to code was just the missing piece.",
-    "sections": [''],
-    "section_id": ""
+    "sections": [
+      {
+        "title": "StarDancer",
+        "description": "This is the project that has most of my focus right now. A game where you build momentum and surf through the stars.",
+      },
+      {
+        "title": "Perfect Practice",
+        "description": "A drum practice app I'm developing that lets people set their own practice routines, log their practice time, track goals, and .",
+      }
+    ],
   },
+  {
+    "title": "Contact Me",
+    "subtitle": "",
+  }
 ]
 
 onMounted(() => {
-  const listenForInitialScrollorClick = (e) => {
+  const listenForInitialScrollOrClick = (e) => {
     if (inputDelayIsActive.value == true) return;
     if (e.deltaY > 0 || e.type == 'click') {
       userHasScrolled.value = true; // Toggle reactive flag
@@ -54,11 +69,12 @@ onMounted(() => {
       // namecard.querySelector('#namecard-img').style.display = 'none';
       setTimeout(() => {
         modifyNamecardForHeader();
+        advanceToNextSlideOrSection();
         namecardHasMoved.value = true;
       }, 300)
 
-      window.removeEventListener('wheel', listenForInitialScrollorClick);
-      window.removeEventListener('click', listenForInitialScrollorClick);
+      window.removeEventListener('wheel', listenForInitialScrollOrClick);
+      window.removeEventListener('click', listenForInitialScrollOrClick);
       window.addEventListener('wheel', listenForSlideshowScrollOrClick);
       window.addEventListener('click', listenForSlideshowScrollOrClick);
     }
@@ -78,13 +94,16 @@ onMounted(() => {
     if (inputDelayIsActive.value == true) return;
     console.log('hi c:');
 
-
-
+    advanceToNextSlideOrSection();
     startInputDelay();
   }
 
-  window.addEventListener('wheel', listenForInitialScrollorClick);
-  window.addEventListener('click', listenForInitialScrollorClick);
+  window.addEventListener('wheel', listenForInitialScrollOrClick);
+  window.addEventListener('click', listenForInitialScrollOrClick);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("wheel", handleScroll);
 });
 
 
@@ -96,16 +115,74 @@ const startInputDelay = () => {
     console.log('Input delay ended');
   }, inputDelayLengthMs);
 }
+
+const hideBothSections = () => {
+  scrollLeftSectionIntoView.value = false;
+  scrollRightSectionIntoView.value = false;
+}
+
+const showBothSections = () => {
+  scrollLeftSectionIntoView.value = true;
+  scrollRightSectionIntoView.value = true;
+}
+
+const advanceToNextSlideOrSection = () => {
+  let currentSlideshow = getCurrentSlideshow();
+  let currentSection = getCurrentSlideshowSection();
+  hideBothSections();
+  currentSlideshow.value = getCurrentSlideshow()
+  console.log(currentSlideshow);
+  showBothSections();
+
+
+}
+
+const nextSlide = () => {
+  if (slideshowSteps[currentSlideshowStepIndex.value + 1] == null) {
+    currentSlideshowStep.value -= 1;
+    return false;
+  } else {
+    currentSlideshowStep.value += 1;
+    return true;
+  }
+}
+
+const nextSection = () => {
+  if (currentSlideshow.sections[slideshowCurrentSectionIndex.value + 1] == null) {
+    slideshowCurrentSection.value = 0;
+    return false;
+  } else {
+    slideshowCurrentSection.value += 1;
+    return true;
+  }
+}
+
+const getCurrentSlideshow = () => {
+  return slideshowSteps[currentSlideshowStepIndex.value];
+}
+
+const getCurrentSlideshowSection = () => {
+  return getCurrentSlideshow().sections[slideshowCurrentSectionIndex.value];
+}
+
+
+const currentSlideshow = computed(() => slideshowSteps[currentSlideshowStepIndex.value]);
+const currentSlideshowStep = computed(() => currentSlideshow.value?.sections[currentSlideshowStepIndex.value]);
+
 </script>
 
 <template>
   <div id="main-wrapper">
     <div id="nav">
-      <!-- This empty div becomes occupied visually when namecard "moves" -->
       <div id="nav-placeholder" :class="{ 'active': userHasScrolled }"></div>
+      <div id="nav-links">
+        <a class="nav-link" :class="{ 'hide-color': !userHasScrolled, 'fade-in': userHasScrolled }">Info</a>
+        <a class="nav-link" :class="{ 'hide-color': !userHasScrolled, 'fade-in': userHasScrolled }">Contact</a>
+      </div>
     </div>
 
     <div id="side-by-side-main" :class="{ 'align-center-initial': !namecardHasMoved }">
+
       <div id="left-section-main" :class="{ 'full-width': !namecardHasMoved }">
         <!-- This h1 stays in DOM, but shifts position+style when userHasScrolled -->
         <h1 id="namecard" :class="{ 'shrink-header': userHasScrolled }">
@@ -115,11 +192,9 @@ const startInputDelay = () => {
           Reeves
         </h1>
         <span id="prompt-text" class="primary-font light italic" :class="{ 'fade-out': userHasScrolled }">Scroll or
-          click
-          to learn
-          more...</span>
+          click to learn more...</span>
 
-        <div id="lower-section" :class="{ 'expand': userHasScrolled, 'scroll-into-view': namecardHasMoved }">
+        <div id="lower-section" :class="{ 'expand': userHasScrolled, 'scroll-into-view': scrollLeftSectionIntoView }">
           <div id="rotating-title-container">
             <div id="title-top-divider"></div>
             <h2 id="rotating-title">Full Stack Developer</h2>
@@ -133,8 +208,14 @@ const startInputDelay = () => {
         </div>
       </div>
 
-      <div id="right-section-main" :class="{ 'scroll-into-view': namecardHasMoved }">
-        <h1 style="font-size: 123px;">Some<br /> Image<br /> Here</h1>
+      <div id="right-section-main" :class="{ 'scroll-into-view': scrollRightSectionIntoView }">
+        <div class="slideshow-section" v-for="section in currentSlideshow.sections">
+          <h1 class="section-title">{{ section.title }}</h1>
+          <p class="section-description">{{ section.description }}</p>
+          <div class="section-icons" v-if="section.icons != []">
+            <img v-for="iconUrl in section.icons">
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -143,6 +224,7 @@ const startInputDelay = () => {
 <style scoped>
 #main-wrapper {
   display: flex;
+  height: 100%;
   flex-direction: column;
   margin: 0;
   padding: 0;
@@ -159,9 +241,23 @@ const startInputDelay = () => {
   display: flex;
   height: 80px;
   align-items: center;
+  justify-content: space-between;
   padding: 0 20px;
   position: relative;
   border-bottom: 1px solid #ddd;
+}
+
+#nav-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  margin: 0 5vw 0 0;
+}
+
+.nav-link {
+  font-family: "Roboto Serif", serif;
+  font-size: 18px;
 }
 
 :deep(#prompt-text) {
@@ -184,9 +280,25 @@ const startInputDelay = () => {
   }
 }
 
-.fade-out {
-  color: rgb(0, 0, 0, 0) !important;
+.hide {
+  display: none;
 }
+
+.hide-color {
+  color: #000000;
+  display: none;
+}
+
+.fade-in {
+  color: #a2a2a2;
+  transition: color 1s ease-in;
+}
+
+.fade-out {
+  color: rgba(0, 0, 0, 0) !important;
+  transition: color 0.5s ease-out;
+}
+
 
 /* Empty placeholder in nav that can "catch" the namecard visually */
 #nav-placeholder {
@@ -202,12 +314,17 @@ const startInputDelay = () => {
 
 #side-by-side-main {
   display: flex;
+  height: 100%;
 }
 
 @media screen and (max-width: 920px) {
   #side-by-side-main {
-    flex-direction: column;
+    flex-direction: column-reverse;
     align-items: center;
+  }
+
+  #right-section-main {
+    max-height: 70%;
   }
 }
 
@@ -328,7 +445,7 @@ const startInputDelay = () => {
   justify-content: center;
   border-left: 1px solid #c2c2c2;
   transition: position 0.5s ease;
-  transform: translate(50vw, 0px);
+  transform: translate(100vw, 0px);
 
 }
 
@@ -376,4 +493,3 @@ const startInputDelay = () => {
   border-right: 1px solid #d2d2d2;
 }
 </style>
-onimation: infinite pulse alternate slide-in;
