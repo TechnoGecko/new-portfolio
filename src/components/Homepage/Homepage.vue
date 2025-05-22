@@ -4,14 +4,14 @@ import '../../style.css'
 
 const userHasScrolled = ref(false);
 const namecardHasMoved = ref(false);
-const currentSlideshowStepIndex = ref(0);
+const currentSlideshowIndex = ref(0);
 const slideshowCurrentSectionIndex = ref(0);
 const inputDelayIsActive = ref(false);
 const inputDelayLengthMs = 1500;
 const scrollLeftSectionIntoView = ref(false);
 const scrollRightSectionIntoView = ref(false);
 
-const slideshowSteps = [
+const slideshows = [
   {
     "title": "Full Stack Developer",
     "subtitle": "I excel in a wide range of web technologies, from interactive UIs to complex database architecture and ",
@@ -23,17 +23,18 @@ const slideshowSteps = [
     "sections": [
       {
         "title": "PHP and SQL",
-        "subtitle": "A full-stack web development match made in heaven, once you get used to the syntax!",
-        "icons": ["../../public/media/php-logo.png", "../../public/media/mysql-logo.png"]
+        "description": "A full-stack web development match made in heaven, once you get used to the syntax!",
+        "icons": ["/media/php-logo.png", "/media/mysql-logo.png"]
       },
       {
         "title": "Javascript and Friends",
-        "subtitle": "I often prefer vanilla JS when I have the choice, but I'm just as comfortable in a framework like React or Vue.",
-        "icons": ["./public/media/js-logo.png", "./public/media/react-logo.png", "./public/media/vue-logo.png",]
+        "description": "I often prefer vanilla JS when I have the choice, but I'm just as comfortable in a framework like React or Vue.",
+        "icons": ["/media/js-logo.png", "/media/react-logo.png", "/media/vue-logo.png",]
       },
       {
         "title": "Shopify",
-        "description": "I have experience making a variety of customizations to shopify themes, from small visual edits to full functionality overhauls using custom apps and scripts."
+        "description": "I have experience making a variety of customizations to shopify themes, from small visual edits to full functionality overhauls using custom apps and scripts.",
+        "icons": ['/media/liquid-logo.png', '/media/shopify-logo.png']
       }
     ],
   },
@@ -80,31 +81,34 @@ onMounted(() => {
     }
   }
 
-  const modifyNamecardForHeader = () => {
-    let namecard = document.getElementById('namecard');
-    namecard.style.color = 'unset';
-    namecard.appendChild(document.getElementById('namecard-img'));
-    document.querySelector('#namecard>br').remove();
-    namecard.querySelector('#namecard-img').style.display = 'unset';
-    namecard.style.margin = 0;
-  }
 
-
-  const listenForSlideshowScrollOrClick = () => {
-    if (inputDelayIsActive.value == true) return;
-    console.log('hi c:');
-
-    advanceToNextSlideOrSection();
-    startInputDelay();
-  }
 
   window.addEventListener('wheel', listenForInitialScrollOrClick);
   window.addEventListener('click', listenForInitialScrollOrClick);
 });
 
 onUnmounted(() => {
-  window.removeEventListener("wheel", handleScroll);
+  window.removeEventListener("wheel", listenForSlideshowScrollOrClick);
+  window.removeEventListener("click", listenForSlideshowScrollOrClick);
 });
+
+const modifyNamecardForHeader = () => {
+  let namecard = document.getElementById('namecard');
+  namecard.style.color = 'unset';
+  namecard.appendChild(document.getElementById('namecard-img'));
+  document.querySelector('#namecard>br').remove();
+  namecard.querySelector('#namecard-img').style.display = 'unset';
+  namecard.style.margin = 0;
+}
+
+
+const listenForSlideshowScrollOrClick = () => {
+  if (inputDelayIsActive.value == true) return;
+  console.log('hi c:');
+
+  advanceToNextSlideOrSection();
+  startInputDelay();
+}
 
 
 const startInputDelay = () => {
@@ -127,47 +131,70 @@ const showBothSections = () => {
 }
 
 const advanceToNextSlideOrSection = () => {
-  let currentSlideshow = getCurrentSlideshow();
-  let currentSection = getCurrentSlideshowSection();
+
   hideBothSections();
-  currentSlideshow.value = getCurrentSlideshow()
-  console.log(currentSlideshow);
-  showBothSections();
-
-
+  if (currentSlideshowIndex.value == 0) {
+    populateSlideInfo();
+  }
+  if (nextSlideshowSection.value != null) {
+    advanceToNextSection();
+    scrollToNextSection();
+  } else if (nextSlideshow.value !== null) {
+    advanceToNextSlide();
+    scrollToNextSection();
+  } else {
+    console.log("No more sections/slides! :(");
+  }
+  console.log(currentSlideshow.value.value);
+  setTimeout(() => {
+    showBothSections();
+  }, 500);
 }
 
-const nextSlide = () => {
-  if (slideshowSteps[currentSlideshowStepIndex.value + 1] == null) {
-    currentSlideshowStep.value -= 1;
-    return false;
+const advanceToNextSlide = () => {
+  if (slideshows[currentSlideshowIndex.value + 1] == null) {
+    currentSlideshowIndex.value = 0;
   } else {
-    currentSlideshowStep.value += 1;
-    return true;
+    currentSlideshowIndex.value += 1;
   }
 }
 
-const nextSection = () => {
-  if (currentSlideshow.sections[slideshowCurrentSectionIndex.value + 1] == null) {
-    slideshowCurrentSection.value = 0;
-    return false;
+const populateSlideInfo = () => {
+  document.getElementById('rotating-title').innerText = currentSlideshow.value.title;
+  document.getElementById('rotating-text').innerText = currentSlideshow.value.subtitle
+}
+
+const scrollToNextSection = () => {
+  console.log('Do some stuff!');
+}
+
+const advanceToNextSection = () => {
+  console.log('current slideshow:');
+
+  console.log(currentSlideshow.value)
+  console.log('slideshowCurrentSectionIndex.value:')
+  console.log(slideshowCurrentSectionIndex.value);
+  console.log('')
+
+  const sections = currentSlideshow.value?.sections;
+  if (sections[slideshowCurrentSectionIndex.value + 1] == null) {
+    slideshowCurrentSectionIndex.value = 0;
   } else {
-    slideshowCurrentSection.value += 1;
-    return true;
+    slideshowCurrentSectionIndex.value += 1;
   }
+
+  populateSlideInfo();
+
 }
 
-const getCurrentSlideshow = () => {
-  return slideshowSteps[currentSlideshowStepIndex.value];
-}
+const currentSlideshow = computed(() => slideshows[currentSlideshowIndex.value]);
+const currentSlideshowSection = computed(() => currentSlideshow.value?.sections[slideshowCurrentSectionIndex.value] ?? null);
+const nextSlideshow = computed(() => slideshows[currentSlideshowIndex.value + 1]);
+const nextSlideshowSection = computed(() => {
+  const sections = currentSlideshow.value?.sections;
+  return sections?.[slideshowCurrentSectionIndex.value + 1] ?? null;
+});
 
-const getCurrentSlideshowSection = () => {
-  return getCurrentSlideshow().sections[slideshowCurrentSectionIndex.value];
-}
-
-
-const currentSlideshow = computed(() => slideshowSteps[currentSlideshowStepIndex.value]);
-const currentSlideshowStep = computed(() => currentSlideshow.value?.sections[currentSlideshowStepIndex.value]);
 
 </script>
 
@@ -195,25 +222,27 @@ const currentSlideshowStep = computed(() => currentSlideshow.value?.sections[cur
           click to learn more...</span>
 
         <div id="lower-section" :class="{ 'expand': userHasScrolled, 'scroll-into-view': scrollLeftSectionIntoView }">
-          <div id="rotating-title-container">
-            <div id="title-top-divider"></div>
-            <h2 id="rotating-title">Full Stack Developer</h2>
-          </div>
-          <div id="rotating-text-container">
-            <div id="title-side-divider"></div>
-            <p id="rotating-text">
-              Some text about the current title that expands on it, and sells my skills a little bit.
-            </p>
+          <div id="rotating-container">
+            <div id="rotating-title-container">
+              <div id="title-top-divider"></div>
+              <h2 id="rotating-title">{{ currentSlideshow.value?.title }}</h2>
+            </div>
+            <div id="rotating-text-container">
+              <div id="title-side-divider"></div>
+              <p id="rotating-text">
+                {{ currentSlideshow.value?.subtitle }}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       <div id="right-section-main" :class="{ 'scroll-into-view': scrollRightSectionIntoView }">
-        <div class="slideshow-section" v-for="section in currentSlideshow.sections">
+        <div class="slideshow-section" v-for="section in currentSlideshow.value?.sections || []" :key="section.title">
           <h1 class="section-title">{{ section.title }}</h1>
           <p class="section-description">{{ section.description }}</p>
           <div class="section-icons" v-if="section.icons != []">
-            <img v-for="iconUrl in section.icons">
+            <img v-for="iconUrl in section.icons" :src="iconUrl" :key="iconUrl">
           </div>
         </div>
       </div>
@@ -257,7 +286,15 @@ const currentSlideshowStep = computed(() => currentSlideshow.value?.sections[cur
 
 .nav-link {
   font-family: "Roboto Serif", serif;
+  font-weight: light;
   font-size: 18px;
+  text-transform: uppercase;
+  /* font-style: italic; */
+}
+
+.nav-link:hover {
+  font-style: italic;
+  text-decoration: underline 1px #ecebeb;
 }
 
 :deep(#prompt-text) {
@@ -385,6 +422,11 @@ const currentSlideshowStep = computed(() => currentSlideshow.value?.sections[cur
 #namecard.shrink-header #namecard-img {
   width: 50px;
   height: 50px;
+}
+
+#rotating-container {
+  display: flex;
+  gap: 22px;
 }
 
 
